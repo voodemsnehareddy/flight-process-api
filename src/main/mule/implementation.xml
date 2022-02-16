@@ -6,13 +6,14 @@
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="a4c09c5c-f896-461f-8de0-87bd522b8031" >
+		<http:request-connection host="${secure::request.host}" />
 	</http:request-config>
 	<flow name="getFlights" doc:id="cc13be27-550b-4b4f-9f6a-8f4b93ba4436" >
 		<logger level="INFO" doc:name="Start" doc:id="c7781f8f-6c94-4dbd-9db7-9e2e6b3e7fc0" message="#['Starting the Process API for Get Flights' ++ now()]"/>
 		<set-variable value="#[attributes.queryParams.origin]" doc:name="origin" doc:id="1367e261-d399-42c2-b79f-010cc5d3a9cb" variableName="origin"/>
 		<set-variable value="#[attributes.queryParams.destination]" doc:name="destination" doc:id="5be1031b-4a63-4a85-9274-6cf0216a05d3" variableName="destination"/>
 		<try doc:name="Try" doc:id="4d31103b-14b4-4e4a-b017-cc4874c00a92" >
-			<http:request method="GET" doc:name="Get Flight Details from System API" doc:id="577c67b4-136b-4ff1-a505-86a4ad8c4ae8" url="http://indigo-flights-system-api-ws-book-holiday.us-e2.cloudhub.io/api/flights" config-ref="HTTP_Request_configuration">
+			<http:request method="GET" doc:name="Get Flight Details from System API" doc:id="577c67b4-136b-4ff1-a505-86a4ad8c4ae8" config-ref="HTTP_Request_configuration" path="/api/flights">
 				<http:headers ><![CDATA[#[output application/java
 ---
 {
@@ -112,8 +113,8 @@ output application/json
 		<logger level="INFO" doc:name="Start" doc:id="6dcde5d9-a971-4ba7-90d8-828e008e750c" />
 		<set-variable value="#[attributes.uriParams.flightId]" doc:name="Set Variable" doc:id="1a042016-14d3-4b9f-ae95-94877cfd4e64" variableName="ID"/>
 		<try doc:name="Try" doc:id="6e7d70f9-0655-4c93-96ba-30755462d27c" >
-			<set-variable value="#['http://indigo-flights-system-api-ws-book-holiday.us-e2.cloudhub.io/api/flights/' ++ vars.ID]" doc:name="Set Variable" doc:id="b991c767-3488-47b6-809f-af3995b75513" variableName="url"/>
-			<http:request method="GET" doc:name="Get Flight Detail from System API" doc:id="dd418b34-6d41-422f-88f0-1273583257d7" config-ref="HTTP_Request_configuration" url="#[vars.url]">
+			<set-variable value="#['/api/flights/' ++ vars.ID]" doc:name="Set Variable" doc:id="b991c767-3488-47b6-809f-af3995b75513" variableName="url"/>
+			<http:request method="GET" doc:name="Get Flight Detail from System API" doc:id="dd418b34-6d41-422f-88f0-1273583257d7" config-ref="HTTP_Request_configuration" path="#[vars.url]">
 			<http:headers><![CDATA[#[output application/java
 ---
 {
@@ -169,7 +170,7 @@ output application/json
 		<http:listener doc:name="Listener" doc:id="e6bdd38c-fa4d-41e1-8c84-9e38d3024b84" config-ref="indigo-flight-booking-api-httpListenerConfig" path="/flights" allowedMethods="POST"/>
 		<logger level="INFO" doc:name="Start" doc:id="ac1761b2-dcc8-4c9f-a20a-aad84177325f" />
 		<try doc:name="Try" doc:id="c35da922-7ba6-43a0-a2de-f981bd9b84c6" >
-			<http:request method="POST" doc:name="Send Flight Booking Details to System API" doc:id="41d18684-6d5c-4303-92f9-16b28cc5335e" config-ref="HTTP_Request_configuration" url="http://indigo-flights-system-api-ws-book-holiday.us-e2.cloudhub.io/api/flights">
+			<http:request method="POST" doc:name="Send Flight Booking Details to System API" doc:id="41d18684-6d5c-4303-92f9-16b28cc5335e" config-ref="HTTP_Request_configuration" path="/api/flights">
 			<http:body><![CDATA[#[{
 	"code": payload.code,
 	"price": payload.price,

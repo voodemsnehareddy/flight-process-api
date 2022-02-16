@@ -10,8 +10,8 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
 	<http:listener-config name="indigo-flight-booking-api-httpListenerConfig">
         <http:listener-connection host="0.0.0.0" port="8081" />
     </http:listener-config>
-	<configuration-properties doc:name="Configuration properties" doc:id="e3f42dd9-99e7-4f6d-a7dd-0667daa966aa" file="config\local.yaml" />
-	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="bb8b7835-20c1-47e8-a3f8-60ec2b06f1a2" file="dev-config.yaml" key="flights" >
+	<configuration-properties doc:name="Configuration properties" doc:id="e3f42dd9-99e7-4f6d-a7dd-0667daa966aa" file="dev-config.yaml" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="58aecb16-3b89-4cfb-8075-3a7e82bd92c8" file="dev-config.yaml" key="flights" >
 		<secure-properties:encrypt algorithm="Blowfish" />
 	</secure-properties:config>
 

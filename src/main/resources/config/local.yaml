@@ -3,7 +3,7 @@ http:
   path: "flights"
   
 request:
-  host: "localhost"
+  host: "indigo-flights-system-api-ws.us-e2.cloudhub.io"
   port: "8081"
-  client_id: "944b80957ab64578a6d3015639e50e2a"
-  client_secret: "946995D64c0d4737B1EfaF0e08E2189D"
+  client_id: "1feda93e636542bdb17baeb38b2780eb"
+  client_secret: "993946D1d90F47B397C14a30f96f97d5"
