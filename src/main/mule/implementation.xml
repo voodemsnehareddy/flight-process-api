@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="a4c09c5c-f896-461f-8de0-87bd522b8031" >
+	</http:request-config>
+	<flow name="getFlights" doc:id="cc13be27-550b-4b4f-9f6a-8f4b93ba4436" >
+		<logger level="INFO" doc:name="Start" doc:id="c7781f8f-6c94-4dbd-9db7-9e2e6b3e7fc0" message="#['Starting the Process API for Get Flights' ++ now()]"/>
+		<set-variable value="#[attributes.queryParams.origin]" doc:name="origin" doc:id="1367e261-d399-42c2-b79f-010cc5d3a9cb" variableName="origin"/>
+		<set-variable value="#[attributes.queryParams.destination]" doc:name="destination" doc:id="5be1031b-4a63-4a85-9274-6cf0216a05d3" variableName="destination"/>
+		<try doc:name="Try" doc:id="4d31103b-14b4-4e4a-b017-cc4874c00a92" >
+			<http:request method="GET" doc:name="Get Flight Details from System API" doc:id="577c67b4-136b-4ff1-a505-86a4ad8c4ae8" url="http://indigo-flights-system-api-ws-book-holiday.us-e2.cloudhub.io/api/flights" config-ref="HTTP_Request_configuration">
+				<http:headers ><![CDATA[#[output application/java
+---
+{
+	"client_secret" : "${secure::request.client_secret}",
+	"client_id" : "${secure::request.client_id}"
+}]]]></http:headers>
+
+		</http:request>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="fa7487b8-4f35-4eba-8204-aad94e76fc35" type="HTTP:BAD_REQUEST">
+					<ee:transform doc:name="Transform Message" doc:id="d40542e0-dcb1-4ee1-808f-aae8e838aef4" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<choice doc:name="Choice" doc:id="f44444c8-7cc6-4182-9137-67307bf1454e" >
+			<when expression="#[vars.origin != null and vars.destination != null]">
+				<ee:transform doc:name="Transform Message" doc:id="4b066f9c-8193-43b7-bab0-6e1b1cd94af1" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map ((item, index) -> {
+	"ID": item.ID,
+	"code": item.code,
+	"price": item.price,
+	"departureDate": item.departureDate,
+	"origin": item.origin,
+	"destination": item.destination,
+	"emptySeats": item.emptySeats,
+	"plane": {
+		"planeType": item.plane.planeType,
+		"totalSeats": item.plane.totalSeats
+	},
+}) filter ((item, index) -> item.origin == vars.origin and item.destination == vars.destination)]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<when expression="#[vars.origin != null or vars.destination != null]">
+				<ee:transform doc:name="Transform Message" doc:id="036076f7-6e77-4ed4-a95b-e9eb70ef8ea3" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map ((item, index) -> {
+	"ID": item.ID,
+	"code": item.code,
+	"price": item.price,
+	"departureDate": item.departureDate,
+	"origin": item.origin,
+	"destination": item.destination,
+	"emptySeats": item.emptySeats,
+	"plane": {
+		"planeType": item.plane.planeType,
+		"totalSeats": item.plane.totalSeats
+	},
+}) filter ((item, index) -> item.origin == vars.origin or item.destination == vars.destination)	]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="fba622a2-9a53-42fc-bf1d-5a64c65bb6c1" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="End" doc:id="74f8f988-9b31-40be-8e65-dfcd59dad6f6" message="Ended"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="1e1cccf7-f7e5-4b5b-a9fe-c1a50a8c6a5d" type="HTTP:UNSUPPORTED_MEDIA_TYPE">
+				<ee:transform doc:name="Media Type Error" doc:id="b05cb2a0-2ab7-42f8-977c-33302adbe01f" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "Connection Failure. Please try again after some time. Really regret the inconvenience."
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="getFlightsByID" doc:id="c0ab7112-6bde-443e-b84d-71d88f8864f4" >
+		<http:listener doc:name="Listener" doc:id="51f6d56a-6116-407f-8bb2-41a23d94d86e" config-ref="indigo-flight-booking-api-httpListenerConfig" path="/flights/{ID}"/>
+		<logger level="INFO" doc:name="Start" doc:id="6dcde5d9-a971-4ba7-90d8-828e008e750c" />
+		<set-variable value="#[attributes.uriParams.flightId]" doc:name="Set Variable" doc:id="1a042016-14d3-4b9f-ae95-94877cfd4e64" variableName="ID"/>
+		<try doc:name="Try" doc:id="6e7d70f9-0655-4c93-96ba-30755462d27c" >
+			<set-variable value="#['http://indigo-flights-system-api-ws-book-holiday.us-e2.cloudhub.io/api/flights/' ++ vars.ID]" doc:name="Set Variable" doc:id="b991c767-3488-47b6-809f-af3995b75513" variableName="url"/>
+			<http:request method="GET" doc:name="Get Flight Detail from System API" doc:id="dd418b34-6d41-422f-88f0-1273583257d7" config-ref="HTTP_Request_configuration" url="#[vars.url]">
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	"client_secret" : "${secure::request.client_secret}",
+	"client_id" : "${secure::request.client_id}"
+}]]]></http:headers>
+			<http:uri-params><![CDATA[#[output application/java
+---
+{
+	"flightId" : "vars.ID"
+}]]]></http:uri-params>
+		</http:request>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="a1f55db8-6ccd-48de-8ef7-8dfcb2da7f26" type="HTTP:BAD_REQUEST">
+					<ee:transform doc:name="Transform Message" doc:id="89b5e1f9-b4df-40de-bb7b-54c9b7023909" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<logger level="INFO" doc:name="Logger" doc:id="aff6a428-ff40-46b2-a7d6-a6dfaa5f4332" message="#[vars.url]"/>
+		<ee:transform doc:name="Transforming to JSON" doc:id="18fe4030-2996-4433-bcd1-18939abad9d3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="End" doc:id="64b7558a-30a7-4cc8-967f-0b7813635bad" />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="70e63837-eb4c-4873-a30a-a60e127217ad" type="HTTP:UNSUPPORTED_MEDIA_TYPE">
+				<ee:transform doc:name="Media Type Error" doc:id="b7fcddaa-d52e-47a5-a3b4-c0c88d409160" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "Connection Failure. Please try again after some time. Really regret the inconvenience."
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="bookFlight" doc:id="a2d22365-a86a-49bc-88c4-f1ad61a3bfb1" >
+		<http:listener doc:name="Listener" doc:id="e6bdd38c-fa4d-41e1-8c84-9e38d3024b84" config-ref="indigo-flight-booking-api-httpListenerConfig" path="/flights" allowedMethods="POST"/>
+		<logger level="INFO" doc:name="Start" doc:id="ac1761b2-dcc8-4c9f-a20a-aad84177325f" />
+		<try doc:name="Try" doc:id="c35da922-7ba6-43a0-a2de-f981bd9b84c6" >
+			<http:request method="POST" doc:name="Send Flight Booking Details to System API" doc:id="41d18684-6d5c-4303-92f9-16b28cc5335e" config-ref="HTTP_Request_configuration" url="http://indigo-flights-system-api-ws-book-holiday.us-e2.cloudhub.io/api/flights">
+			<http:body><![CDATA[#[{
+	"code": payload.code,
+	"price": payload.price,
+	"departureDate": payload.departureDate,
+	"origin": payload.origin,
+	"destination": payload.destination,
+	"emptySeats": payload.emptySeats,
+	"planeType": payload.planeType,
+	"totalSeats": payload.totalSeats
+}]]]></http:body>
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	"client_secret" : "${secure::request.client_secret}",
+	"client_id" : "${secure::request.client_id}"
+}]]]></http:headers>
+		</http:request>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="94f65b9b-1212-4ff3-ac85-171f4252eb18" type="HTTP:BAD_REQUEST">
+					<ee:transform doc:name="Transform Message" doc:id="eeece348-e452-45ae-9d1d-d2404a694986" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<logger level="INFO" doc:name="End" doc:id="c8fd6c50-dee8-44ec-96a0-5fac64f84ed3" />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="930306c2-e129-42e8-97da-a0c9a1a4de2a" type="HTTP:BAD_GATEWAY, HTTP:BAD_REQUEST">
+				<ee:transform doc:name="Transform Message" doc:id="b7a4e3a6-2490-4cfd-86a9-caea7699e034" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Please check the URL entered"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

@@ -1,0 +1,9 @@
+http:
+  port: "8081"
+  path: "flights"
+  
+request:
+  host: "localhost"
+  port: "8081"
+  client_id: "944b80957ab64578a6d3015639e50e2a"
+  client_secret: "946995D64c0d4737B1EfaF0e08E2189D"
